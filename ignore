@@ -1,0 +1,15 @@
+STEPS FOR RUNNING EACH DAY
+
+1. csfloat_daily_snapshot - takes daily snapshot from csfloat api url
+2. update_all_item_names - adds any nonexisiting items to the names table from the daily snapshot
+3. csfloat_price_history_daily - updates the price history for that day
+
+csfloat_price_history_initial_dict - initial price history document, creates fresh dictionaries for history
+steam_fetch_price - fetches price of an item on steam for ALL qualities, currently set to awp duality
+update - just adds IDs to all_item_names
+all_item_names - takes all items from csfloat daily snapshot table and adds them initially
+
+
+TODO
+update the IDs to name
+create a frontend listing 10 items per page, not unique to condition
