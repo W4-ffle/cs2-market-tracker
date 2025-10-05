@@ -17,7 +17,10 @@ jobs:
       - name: Run spike detector
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
-          PRICE_PCT: "0.15"
-          QTY_PCT: "0.50"
-          MIN_QTY_DELTA: "10"
+          MONGO_DB: ${{ secrets.MONGO_DB }}
+          HISTORY_COLLECTION: ${{ secrets.HISTORY_COLLECTION }}
+          ALERTS_COLLECTION: ${{ secrets.ALERTS_COLLECTION }}
+          PRICE_PCT: ${{ secrets.PRICE_PCT }}
+          QTY_PCT: ${{ secrets.QTY_PCT }}
+          MIN_QTY_DELTA: ${{ secrets.MIN_QTY_DELTA }}
         run: python detect_spikes.py
