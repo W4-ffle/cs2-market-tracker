@@ -1,3 +1,10 @@
-pymongo[srv]
-requests
-python-dotenv
+# Core runtime
+python-dotenv==1.0.1
+requests==2.32.3
+
+# MongoDB driver (SRV support included)
+pymongo[srv]==4.9.1
+
+# Optional compression libraries for faster MongoDB I/O
+zstandard==0.23.0
+python-snappy==0.7.2
