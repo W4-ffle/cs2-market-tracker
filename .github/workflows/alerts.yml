@@ -1,0 +1,23 @@
+# .github/workflows/alerts.yml
+name: Spike Alerts (Hourly)
+
+on:
+  schedule:
+    - cron: '10 * * * *'   # 10 past each hour UTC, after your updater
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11', cache: 'pip' }
+      - run: pip install -r requirements.txt
+      - name: Run spike detector
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          PRICE_PCT: "0.15"
+          QTY_PCT: "0.50"
+          MIN_QTY_DELTA: "10"
+        run: python detect_spikes.py
