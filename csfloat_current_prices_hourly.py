@@ -15,12 +15,12 @@ load_dotenv()
 
 # ---------- CONFIG ----------
 MONGO_URI = os.getenv("MONGO_URI")
-CSFLOAT_URL = os.getenv("CSFLOAT_URL", "https://csfloat.com/api/v1/listings/price-list")
-TIMEOUT = int(os.getenv("CSFLOAT_TIMEOUT", "30"))      # short; we have retries
-BULK_CHUNK = int(os.getenv("BULK_CHUNK", "1000"))      # try 500–1000; smaller = more parallelism
-BULK_WORKERS = int(os.getenv("BULK_WORKERS", "4"))     # parallel bulk writers; 2–6 is usually good
-SNAPSHOT_W0 = os.getenv("SNAPSHOT_W0", "1") == "1"     # w=0 for current_prices (faster, no acks)
-POOL_SIZE = int(os.getenv("MONGO_POOL", "100"))        # allow more concurrent sockets
+CSFLOAT_URL = os.getenv("CSFLOAT_URL")
+TIMEOUT = int(os.getenv("CSFLOAT_TIMEOUT"))
+BULK_CHUNK = int(os.getenv("BULK_CHUNK"))
+BULK_WORKERS = int(os.getenv("BULK_WORKERS"))
+SNAPSHOT_W0 = os.getenv("SNAPSHOT_W0") == "1"
+POOL_SIZE = int(os.getenv("MONGO_POOL"))
 
 if not MONGO_URI:
     raise SystemExit("Set MONGO_URI in .env")
