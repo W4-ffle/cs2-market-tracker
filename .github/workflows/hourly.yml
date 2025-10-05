@@ -1,0 +1,62 @@
+name: Hourly CSFloat Update
+
+# ------------------------
+# WHEN to run
+# ------------------------
+on:
+  schedule:
+    - cron: '0 * * * *'   # every hour, at minute 0 (UTC)
+  workflow_dispatch:       # adds a "Run workflow" button for manual testing
+
+# ------------------------
+# SETTINGS
+# ------------------------
+permissions:
+  contents: read
+
+# avoid overlapping runs if one hour overlaps the next
+concurrency:
+  group: hourly-csfloat
+  cancel-in-progress: false
+
+# ------------------------
+# WHAT to do
+# ------------------------
+jobs:
+  run:
+    runs-on: ubuntu-latest      # GitHub-hosted Linux VM
+    timeout-minutes: 20         # max run time (your job takes ~6–8 min)
+
+    steps:
+      # 1️⃣  Download your repo onto the VM
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      # 2️⃣  Install Python on the VM
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'          # speeds up repeated installs
+
+      # 3️⃣  Install dependencies
+      - name: Install dependencies
+        run: |
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            pip install "pymongo[srv]" requests python-dotenv
+          fi
+
+      # 4️⃣  Run your script
+      - name: Run hourly updater
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          CSFLOAT_URL: ${{ secrets.CSFLOAT_URL }}
+          CSFLOAT_TIMEOUT: ${{ secrets.CSFLOAT_TIMEOUT }}
+          BULK_CHUNK: ${{ secrets.BULK_CHUNK }}
+          BULK_WORKERS: ${{ secrets.BULK_WORKERS }}
+          SNAPSHOT_W0: ${{ secrets.SNAPSHOT_W0 }}
+          MONGO_POOL: ${{ secrets.MONGO_POOL }}
+        run: |
+          python csfloat_current_prices_hourly.py
