@@ -1,31 +1,58 @@
-name: Top Changes Snapshots (Hourly)
+name: Top Changes (Categories) — Hourly
 
 on:
   schedule:
-    - cron: "10 * * * *"   # every hour at :10 UTC
+    - cron: "12 * * * *"   # runs hourly at :12 UTC (make sure your detector runs earlier, e.g. :05)
   workflow_dispatch:
+    inputs:
+      SNAPSHOT_DATE:
+        description: "Manual override (UTC day) YYYY-MM-DD. Leave blank for auto (today/yesterday fallback)."
+        required: false
 
 jobs:
   build-top-changes:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+    timeout-minutes: 15
+    concurrency:
+      group: top-changes-hourly
+      cancel-in-progress: true
 
-      - uses: actions/setup-python@v5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install deps
-        run: pip install pymongo python-dotenv
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pymongo python-dotenv
 
-      - name: Compute & store top changes for current UTC day
+      # If your detector writes near the top of the hour, tiny buffer helps ensure alerts exist.
+      - name: Small buffer
+        run: sleep 10
+
+      - name: Run category snapshots
         env:
+          # REQUIRED secrets
           MONGO_URI: ${{ secrets.MONGO_URI }}
           MONGO_DB: ${{ secrets.MONGO_DB }}
           ALERTS_COLLECTION: ${{ secrets.ALERTS_COLLECTION }}
-          TOP_PRICE_COLLECTION: top_changes_price_daily
-          TOP_QUANTITY_COLLECTION: top_changes_quantity_daily
-          TOP_ANY_COLLECTION: top_changes_any_daily
+
+          # OUTPUT collections (you can rename these if you want)
+          TOP_STICKERS_COLLECTION: top_stickers_daily
+          TOP_WEAPONS_COLLECTION:  top_weapons_daily
+          TOP_CASES_COLLECTION:    top_cases_daily
+
+          # Tuning
           TOP_LIMIT: "50"
-          TOP_METRIC: "pct"   # change to "abs" if you prefer absolute change
-        run: python top_changes_current_day.py
+          TOP_METRIC: "pct"              # or "abs"
+          DISABLE_FALLBACK: "0"          # set "1" to prevent fallback to yesterday
+
+          # Manual override from workflow_dispatch
+          SNAPSHOT_DATE: ${{ github.event.inputs.SNAPSHOT_DATE }}
+        run: |
+          python top_changes_current_day.py
