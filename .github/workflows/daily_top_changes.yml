@@ -1,0 +1,63 @@
+# .github/workflows/daily_top_changes.yml
+name: Daily Top Changes Snapshots
+
+on:
+  schedule:
+    - cron: "30 0 * * *"   # 00:30 UTC daily → builds yesterday
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Single day (UTC) YYYY-MM-DD"
+        required: false
+      date_from:
+        description: "Start day (UTC) YYYY-MM-DD"
+        required: false
+      date_to:
+        description: "End day (UTC) YYYY-MM-DD"
+        required: false
+
+jobs:
+  top-changes-daily:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: pip install pymongo python-dotenv
+
+      - name: Run daily snapshot (yesterday by default)
+        if: ${{ github.event_name == 'schedule' }}
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          MONGO_DB: ${{ secrets.MONGO_DB }}
+          ALERTS_COLLECTION: ${{ secrets.ALERTS_COLLECTION }}
+          TOP_PRICE_COLLECTION: top_changes_price_daily
+          TOP_QUANTITY_COLLECTION: top_changes_quantity_daily
+          TOP_ANY_COLLECTION: top_changes_any_daily
+          TOP_LIMIT: "50"
+          TOP_METRIC: "pct"
+        run: python top_changes_snapshot.py
+
+      - name: Manual run with inputs (single day or range)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          MONGO_DB: ${{ secrets.MONGO_DB }}
+          ALERTS_COLLECTION: ${{ secrets.ALERTS_COLLECTION }}
+          TOP_PRICE_COLLECTION: top_changes_price_daily
+          TOP_QUANTITY_COLLECTION: top_changes_quantity_daily
+          TOP_ANY_COLLECTION: top_changes_any_daily
+          TOP_LIMIT: "50"
+          TOP_METRIC: "pct" # abs for absolute number changes
+        run: |
+          ARGS=""
+          if [ -n "${{ github.event.inputs.date }}" ]; then
+            ARGS="--date ${{ github.event.inputs.date }}"
+          elif [ -n "${{ github.event.inputs.date_from }}" ] && [ -n "${{ github.event.inputs.date_to }}" ]; then
+            ARGS="--from ${{ github.event.inputs.date_from }} --to ${{ github.event.inputs.date_to }}"
+          fi
+          python top_changes_snapshot.py $ARGS
