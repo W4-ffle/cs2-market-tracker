@@ -1,0 +1,31 @@
+name: Top Changes Snapshots (Hourly)
+
+on:
+  schedule:
+    - cron: "10 * * * *"   # every hour at :10 UTC
+  workflow_dispatch:
+
+jobs:
+  build-top-changes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: pip install pymongo python-dotenv
+
+      - name: Compute & store top changes for current UTC day
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          MONGO_DB: ${{ secrets.MONGO_DB }}
+          ALERTS_COLLECTION: ${{ secrets.ALERTS_COLLECTION }}
+          TOP_PRICE_COLLECTION: top_changes_price_daily
+          TOP_QUANTITY_COLLECTION: top_changes_quantity_daily
+          TOP_ANY_COLLECTION: top_changes_any_daily
+          TOP_LIMIT: "50"
+          TOP_METRIC: "pct"   # change to "abs" if you prefer absolute change
+        run: python top_changes_current_day.py
